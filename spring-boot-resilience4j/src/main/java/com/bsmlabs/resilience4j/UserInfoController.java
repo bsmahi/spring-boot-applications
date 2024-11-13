@@ -17,7 +17,8 @@ public class UserInfoController {
     }
 
     @GetMapping("/benchprofiles")
-    @CircuitBreaker(name="benchProfileService", fallbackMethod = "fallbackResponse")
+    @CircuitBreaker(name="userDetailsService", fallbackMethod = "fallbackResponse")
+    @Retry(name = "userDetailsService", fallbackMethod = "retryFallback")
     public List<BenchProfiles> getBenchProfiles() {
         return userInfoService.getBenchProfilesInfo();
     }
@@ -25,5 +26,10 @@ public class UserInfoController {
     public List<String> fallbackResponse(Exception e) {
         System.err.println("Circuit Breaker triggered. Reason: " + e.getMessage());
         return List.of("Service unavailable, please try again later");
+    }
+
+    public List<BenchProfiles> retryFallback(Exception e) {
+        logger.error("All retry attempts failed. Reason: {}", e.getMessage());
+        return List.of(new BenchProfiles("Default Profile", "Fallback data after retry attempts exhausted"));
     }
 }
