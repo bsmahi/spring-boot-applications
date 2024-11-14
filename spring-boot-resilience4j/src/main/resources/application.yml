@@ -22,6 +22,17 @@ management:
       enabled: false
 
 resilience4j:
+  ratelimiter:
+    instances:
+      userDetailsService:
+        limitForPeriod: 10
+        limitRefreshPeriod: 1s
+        timeoutDuration: 500ms
+  timelimiter:
+    instances:
+      userDetailsService:
+        timeoutDuration: 2s
+        cancelRunningFuture: true
   circuitbreaker:
     configs:
       default:

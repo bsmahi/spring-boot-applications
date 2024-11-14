@@ -17,10 +17,26 @@ public class UserInfoController {
     }
 
     @GetMapping("/benchprofiles")
-    @CircuitBreaker(name="userDetailsService", fallbackMethod = "fallbackResponse")
+    @RateLimiter(name = "userDetailsService", fallbackMethod = "rateLimitFallback")
+    @TimeLimiter(name = "userDetailsService", fallbackMethod = "timeLimitFallback")
+    @CircuitBreaker(name = "userDetailsService", fallbackMethod = "fallbackResponse")
     @Retry(name = "userDetailsService", fallbackMethod = "retryFallback")
     public List<BenchProfiles> getBenchProfiles() {
         return userInfoService.getBenchProfilesInfo();
+    }
+
+    public CompletableFuture<List<BenchProfiles>> rateLimitFallback(Exception e) {
+        logger.error("Rate limit exceeded. Reason: {}", e.getMessage());
+        return CompletableFuture.completedFuture(
+                List.of(new BenchProfiles("Rate Limited", "Too many requests"))
+        );
+    }
+
+    public CompletableFuture<List<BenchProfiles>> timeLimitFallback(Exception e) {
+        logger.error("Time limit exceeded. Reason: {}", e.getMessage());
+        return CompletableFuture.completedFuture(
+                List.of(new BenchProfiles("Timeout Error", "Operation took too long to complete"))
+        );
     }
 
     public List<String> fallbackResponse(Exception e) {
